@@ -1,0 +1,7 @@
+# Cài: pip install -r requirements.txt   (Python 3.11 trở lên)
+# Phiên bản cố định để 4 máy trong nhóm giống nhau. pymodbus đổi API giữa các bản 3.x
+# (tham số slave= thành device_id=, cách viết bộ giả lập), nên KHÔNG tự nâng cấp.
+pyserial==3.5
+paho-mqtt==2.2.0
+pymodbus==3.16.2
+cryptography>=42

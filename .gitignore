@@ -1,0 +1,30 @@
+# Bí mật: KHÔNG BAO GIỜ đẩy lên GitHub
+config.toml
+keys.h
+.env
+passwd
+*.pem
+
+# Dữ liệu chạy thử
+*.db
+*.db-wal
+*.db-shm
+*.csv
+!docs/**/*.csv
+logs/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Arduino / IDE
+build/
+.vscode/
+.idea/
+*.bin
+.DS_Store
+Thumbs.db

@@ -1,0 +1,215 @@
+# Cấu hình gateway. Chép file này thành config.toml rồi sửa.
+# config.toml chứa token và khóa nên KHÔNG được đẩy lên GitHub (.gitignore đã chặn).
+# Sau khi chép, chạy:  python tools/genkeys.py config.toml   để thay khóa thử bằng khóa thật.
+
+db_path = "gateway.db"
+log_level = "INFO"          # DEBUG khi cần xem từng gói
+warn_after = 2.0            # quá 2 chu kỳ không nghe thấy -> WARNING
+lost_after = 4.0            # quá 4 chu kỳ -> DISCONNECTED
+
+[lora]
+enabled = true
+port = "COM5"               # cổng của ESP32 cầu nối (Device Manager). Thử không phần cứng: "socket://127.0.0.1:7000"
+baud = 115200
+mode = "free"               # free: node gửi lúc nào cũng được | tdma: chia khe theo beacon | poll: laptop hỏi lần lượt
+net_key = "2B7E151628AED2A6ABF7158809CF4F3C"   # KHÓA THỬ (RFC 4493), dùng ký beacon
+slot_ms = 2000              # độ dài 1 khe (tdma)
+free_slots = 5              # số khe tự do cuối chu kỳ cho báo động / HELLO (tdma)
+beacon_period_s = 60        # chu kỳ beacon (tdma)
+poll_timeout_s = 1.0        # chờ trả lời mỗi lần hỏi (poll)
+
+[mqtt]                      # Mosquitto trên laptop, cho kẹp tay
+enabled = true
+host = "127.0.0.1"
+port = 1883
+username = "gateway"        # tuần 3 bật mật khẩu thì điền
+password = ""
+topic_prefix = "iomt/wrist"
+
+[modbus]                    # giường qua USB-RS485
+enabled = true
+method = "rtu"              # rtu: cổng COM thật | tcp: thử với sim/bed_modbus_sim.py --tcp
+port = "COM6"               # rtu: "COM6"; tcp: "127.0.0.1:5020"
+baud = 9600
+timeout_s = 0.5
+poll_s = 2.0
+
+[cloud]                     # ThingsBoard
+enabled = true
+host = "thingsboard.cloud"
+port = 1883
+token = ""                  # Access token của thiết bị gateway (tick "Is gateway")
+batch = 50
+
+# ---------------------------------------------------------------- sổ đăng ký node
+# id 1..254, không trùng. name là tên hiện trên ThingsBoard, không trùng.
+# insole: cần key (32 ký tự hex) và slot (khi mode = "tdma").
+# wrist:  id phải khớp topic iomt/wrist/<id>/...
+# bed:    unit_id là địa chỉ Modbus (mặc định = id).
+# patient: nối các node của cùng một bệnh nhân (dùng để kiểm tra chéo ngã với giường).
+
+[[nodes]]   # lót giày thật (mạch BME3)
+id = 1
+name = "Lot giay 01"
+kind = "insole"
+period_s = 60
+slot = 1
+key = "01010101010101010101010101010101"   # KHÓA THỬ
+patient = "BN01"
+
+[[nodes]]   # giả lập E1/E1b
+id = 2
+name = "Lot giay 02"
+kind = "insole"
+period_s = 60
+slot = 2
+key = "02020202020202020202020202020202"   # KHÓA THỬ
+patient = "BN02"
+
+[[nodes]]   # giả lập E1/E1b
+id = 3
+name = "Lot giay 03"
+kind = "insole"
+period_s = 60
+slot = 3
+key = "03030303030303030303030303030303"   # KHÓA THỬ
+patient = "BN03"
+
+[[nodes]]   # giả lập E1/E1b
+id = 4
+name = "Lot giay 04"
+kind = "insole"
+period_s = 60
+slot = 4
+key = "04040404040404040404040404040404"   # KHÓA THỬ
+patient = "BN04"
+
+[[nodes]]   # giả lập E1/E1b
+id = 5
+name = "Lot giay 05"
+kind = "insole"
+period_s = 60
+slot = 5
+key = "05050505050505050505050505050505"   # KHÓA THỬ
+patient = "BN05"
+
+[[nodes]]   # giả lập E1/E1b
+id = 6
+name = "Lot giay 06"
+kind = "insole"
+period_s = 60
+slot = 6
+key = "06060606060606060606060606060606"   # KHÓA THỬ
+patient = "BN06"
+
+[[nodes]]   # giả lập E1/E1b
+id = 7
+name = "Lot giay 07"
+kind = "insole"
+period_s = 60
+slot = 7
+key = "07070707070707070707070707070707"   # KHÓA THỬ
+patient = "BN07"
+
+[[nodes]]   # giả lập E1/E1b
+id = 8
+name = "Lot giay 08"
+kind = "insole"
+period_s = 60
+slot = 8
+key = "08080808080808080808080808080808"   # KHÓA THỬ
+patient = "BN08"
+
+[[nodes]]   # giả lập E1/E1b
+id = 9
+name = "Lot giay 09"
+kind = "insole"
+period_s = 60
+slot = 9
+key = "09090909090909090909090909090909"   # KHÓA THỬ
+patient = "BN09"
+
+[[nodes]]   # giả lập E1/E1b
+id = 10
+name = "Lot giay 10"
+kind = "insole"
+period_s = 60
+slot = 10
+key = "0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A"   # KHÓA THỬ
+patient = "BN10"
+
+[[nodes]]   # giả lập E1/E1b
+id = 11
+name = "Lot giay 11"
+kind = "insole"
+period_s = 60
+slot = 11
+key = "0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B"   # KHÓA THỬ
+patient = "BN11"
+
+[[nodes]]   # giả lập E1/E1b
+id = 12
+name = "Lot giay 12"
+kind = "insole"
+period_s = 60
+slot = 12
+key = "0C0C0C0C0C0C0C0C0C0C0C0C0C0C0C0C"   # KHÓA THỬ
+patient = "BN12"
+
+[[nodes]]   # kẹp tay thật
+id = 21
+name = "Kep tay 01"
+kind = "wrist"
+period_s = 5
+patient = "BN01"
+
+[[nodes]]   # giả lập E2
+id = 22
+name = "Kep tay 02"
+kind = "wrist"
+period_s = 5
+patient = "BN02"
+
+[[nodes]]   # giả lập E2
+id = 23
+name = "Kep tay 03"
+kind = "wrist"
+period_s = 5
+patient = "BN03"
+
+[[nodes]]   # giả lập E2
+id = 24
+name = "Kep tay 04"
+kind = "wrist"
+period_s = 5
+patient = "BN04"
+
+[[nodes]]   # giả lập E2
+id = 25
+name = "Kep tay 05"
+kind = "wrist"
+period_s = 5
+patient = "BN05"
+
+[[nodes]]   # giả lập E2
+id = 26
+name = "Kep tay 06"
+kind = "wrist"
+period_s = 5
+patient = "BN06"
+
+[[nodes]]   # giường (thật hoặc giả lập E3)
+id = 31
+name = "Giuong 01"
+kind = "bed"
+period_s = 2
+unit_id = 1
+patient = "BN01"
+
+[[nodes]]   # giường (thật hoặc giả lập E3)
+id = 32
+name = "Giuong 02"
+kind = "bed"
+period_s = 2
+unit_id = 2
+patient = "BN02"
