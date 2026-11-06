@@ -15,7 +15,8 @@
 
   Thư viện: RadioLib (Tools > Manage Libraries). Đã viết theo bản 7.8.1;
   bản 6.x/7.x khác cũng dùng được vì chỉ gọi các hàm cơ bản.
-  CHƯA ĐƯỢC BIÊN DỊCH/THỬ TRÊN MẠCH THẬT — lần nạp đầu xem kỹ Serial Monitor.
+  Đã biên dịch được với core esp32 3.3.12 + RadioLib 7.8.1 (0 cảnh báo, 311 KB).
+  CHƯA THỬ TRÊN MẠCH THẬT: lần nạp đầu xem kỹ Serial Monitor, phải thấy dòng READY.
 
   !!! LUÔN GẮN ANTEN TRƯỚC KHI CẤP ĐIỆN, phát không anten sẽ hỏng Ra-02 !!!
 
@@ -53,10 +54,21 @@ SX1278 radio = new Module(PIN_NSS, PIN_DIO0, PIN_RST, RADIOLIB_NC);
 
 volatile bool rxFlag = false;
 
-#if defined(ESP8266) || defined(ESP32)
-ICACHE_RAM_ATTR
-#endif
-void onPacket(void) {
+// Khai báo trước mọi hàm, để Arduino không phải tự sinh prototype
+// (bước tự sinh hay lỗi khi có thuộc tính như IRAM_ATTR).
+void onPacket(void);
+void setup();
+void loop();
+void halt(const char* what, int16_t code);
+void check(const char* what, int16_t code);
+int hexNibble(char c);
+void printHex(const uint8_t* b, size_t n);
+void startRx();
+void handleRx();
+void handleLine(char* s);
+
+// Hàm ngắt: phải nằm trong IRAM trên ESP32
+void IRAM_ATTR onPacket(void) {
   rxFlag = true;
 }
 
@@ -64,7 +76,7 @@ static char lineBuf[600];
 static size_t lineLen = 0;
 static uint8_t pkt[256];
 
-static void halt(const char* what, int16_t code) {
+void halt(const char* what, int16_t code) {
   while (true) {
     Serial.print("# LOI ");
     Serial.print(what);
@@ -74,18 +86,18 @@ static void halt(const char* what, int16_t code) {
   }
 }
 
-static void check(const char* what, int16_t code) {
+void check(const char* what, int16_t code) {
   if (code != RADIOLIB_ERR_NONE) halt(what, code);
 }
 
-static int hexNibble(char c) {
+int hexNibble(char c) {
   if (c >= '0' && c <= '9') return c - '0';
   if (c >= 'A' && c <= 'F') return c - 'A' + 10;
   if (c >= 'a' && c <= 'f') return c - 'a' + 10;
   return -1;
 }
 
-static void printHex(const uint8_t* b, size_t n) {
+void printHex(const uint8_t* b, size_t n) {
   static const char* H = "0123456789ABCDEF";
   for (size_t i = 0; i < n; i++) {
     Serial.write(H[b[i] >> 4]);
@@ -93,7 +105,7 @@ static void printHex(const uint8_t* b, size_t n) {
   }
 }
 
-static void startRx() {
+void startRx() {
   int16_t st = radio.startReceive();
   if (st != RADIOLIB_ERR_NONE) {
     Serial.print("# startReceive loi ");
@@ -101,7 +113,7 @@ static void startRx() {
   }
 }
 
-static void handleRx() {
+void handleRx() {
   rxFlag = false;
   size_t len = radio.getPacketLength();
   float rssi = radio.getRSSI();
@@ -122,7 +134,7 @@ static void handleRx() {
   startRx();                                 // readData đưa module về standby
 }
 
-static void handleLine(char* s) {
+void handleLine(char* s) {
   if (strncmp(s, "TX ", 3) == 0) {
     const char* h = s + 3;
     size_t hl = strlen(h);

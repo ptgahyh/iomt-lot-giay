@@ -124,3 +124,19 @@ def test_build_telemetry_skips_unknown(cfg):
     payload, ids = build_telemetry(rows, {1: "Lot giay 01"}.get)
     assert payload == {"Lot giay 01": [{"ts": 5, "values": {"a": 1, "r": "x; y"}}]}
     assert ids == [1]
+
+
+# ------------------------------------------------------------ airtime
+def test_airtime_matches_semtech_calculator():
+    from iomt_gateway.airtime import airtime_ms
+    assert round(airtime_ms(19, sf=7), 1) == 51.5
+    assert round(airtime_ms(19, sf=9), 1) == 185.3
+    assert round(airtime_ms(10, sf=9), 1) == 144.4
+    assert round(airtime_ms(19, sf=12), 1) == 1318.9     # có bật low data rate optimize
+
+
+def test_tdma_slot_too_short(tmp_path):
+    k = "11" * 16
+    t = f'[lora]\nmode="tdma"\nslot_ms=300\n[[nodes]]\nid=1\nname="a"\nkind="insole"\nkey="{k}"\nslot=1\n'
+    with pytest.raises(ConfigError, match="quá ngắn"):
+        load(write(tmp_path, t))

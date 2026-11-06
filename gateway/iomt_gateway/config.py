@@ -34,6 +34,8 @@ class LoraCfg:
     port: str = "COM5"          # COMx trên Windows, /dev/ttyUSB0 trên Linux, hoặc socket://host:port
     baud: int = 115200
     mode: str = "free"          # free | tdma | poll
+    sf: int = 9                 # chỉ để kiểm tra độ dài khe; radio thật cấu hình trong firmware
+    bw_khz: float = 125.0
     net_key: bytes = b"\x00" * 16
     slot_ms: int = 2000
     free_slots: int = 5
@@ -124,6 +126,12 @@ def load(path: str | Path) -> Config:
     lora = _section(LoraCfg, lora_raw, "lora")
     if lora.mode not in ("free", "tdma", "poll"):
         raise ConfigError("[lora].mode phải là free, tdma hoặc poll")
+    if lora.mode == "tdma":
+        from .airtime import min_slot_ms
+        need = min_slot_ms(lora.sf, lora.bw_khz)
+        if lora.slot_ms < need:
+            raise ConfigError(f"[lora].slot_ms = {lora.slot_ms} quá ngắn: SF{lora.sf} cần ít nhất "
+                              f"{need:.0f} ms cho DATA + ACK")
 
     nodes: list[NodeCfg] = []
     seen_ids: set[int] = set()

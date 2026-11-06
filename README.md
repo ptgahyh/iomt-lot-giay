@@ -17,7 +17,7 @@ giường   (STM32 + HX711, hoặc giả lập) ─RS-485─┘     (Python, SQL
 | `node_c/` | TV4 | Giường RS-485/Modbus |
 | `gateway/` | TV2 | Chương trình gateway Python + firmware ESP32 cầu nối LoRa + cấu hình Mosquitto |
 | `sim/` | cả nhóm | Bộ giả lập: cầu nối LoRa + 12 lót giày, kẹp tay MQTT, giường Modbus |
-| `docs/` | cả nhóm | **`protocol.md` là bản thỏa thuận giữa các node và gateway**, `test_vectors.md` là các gói mẫu |
+| `docs/` | cả nhóm | **`protocol.md` là bản thỏa thuận giữa các node và gateway**, `test_vectors.md` là các gói mẫu, `ket_qua_thu_nghiem.md` là kết quả thử trên bộ giả lập |
 
 ## Chạy thử toàn hệ thống trên 1 laptop, không cần phần cứng
 
@@ -38,12 +38,14 @@ Sau đó mở 4 cửa sổ cmd ở thư mục gốc repo:
 
 ```bat
 python sim\bed_modbus_sim.py --tcp 5020
-python sim\fake_lora_bridge.py -c gateway\config.toml --period 5 --fall-every 10
+python sim\fake_lora_bridge.py -c gateway\config.toml --period 30 --fall-every 10
 cd gateway && python -m iomt_gateway
 python sim\wrist_mqtt_sim.py -c gateway\config.toml --period 5
 ```
 
 Gateway in ra từng node chuyển sang ONLINE, các báo động, và cứ mỗi phút một dòng thống kê. Xem thêm `gateway/README.md`.
+
+Bộ giả lập LoRa có tính cả va chạm sóng. Ở chế độ `free`, 12 node gửi dày sẽ va chạm nhiều, đúng như ngoài đời. Muốn so sánh 3 chế độ thì đổi `[lora] mode` thành `tdma` hoặc `poll`. Kết quả đã đo nằm ở `docs/ket_qua_thu_nghiem.md`.
 
 ## Quy tắc chung
 

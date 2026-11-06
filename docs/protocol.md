@@ -17,7 +17,11 @@ Bản **v0.1** do TV2 đề xuất ngày 05/11. TV1 và TV2 cùng duyệt. Muố
 | Preamble | 8 |
 | CRC | bật |
 
-Thời gian phát ở SF9 khoảng 185 ms cho gói 19 byte và 145 ms cho ACK 10 byte. Sau khi phát xong, node nghe ACK trong **600 ms**. Không có ACK thì chờ ngẫu nhiên 100–400 ms rồi gửi lại **y nguyên gói cũ** (cùng FCnt). Gửi tối đa 3 lần.
+Thời gian phát ở SF9 khoảng 185 ms cho gói 19 byte và 145 ms cho ACK 10 byte (công thức trong `gateway/iomt_gateway/airtime.py`).
+
+- Sau khi phát xong, node nghe ACK trong **800 ms**. Trên bộ giả lập có 12 node, ACK về sau trung vị khoảng 450 ms, p95 khoảng 630 ms (tính từ lúc bắt đầu phát), nên 600 ms là quá sát.
+- Không có ACK thì chờ ngẫu nhiên **0,5–2 s × số lần đã thử**, rồi gửi lại **y nguyên gói cũ** (cùng FCnt). Gửi tối đa 3 lần.
+- Đừng chờ ngắn kiểu 0,1–0,4 s. Thử trên bộ giả lập: các node vừa va chạm sẽ gửi lại gần như cùng lúc và va chạm tiếp theo dây chuyền.
 
 ## 2. Khung gói
 
@@ -86,9 +90,13 @@ Phần mã hóa nội dung (AES) nằm đầu danh sách được cắt trong k�
 
 - **free** (tuần 2): node gửi lúc nào cũng được. Dùng để làm cho ACK chạy trước.
 - **tdma** (tuần 5): gateway phát BEACON mỗi `beacon_period_s` giây.
-  - Mốc t = 0 là lúc node *nhận xong* beacon. Khe 0 là chỗ của chính beacon. Node có `slot = k` phát trong khe k, tức từ `k·slot_ms` đến `(k+1)·slot_ms`.
-  - Sau khe cuối của node là `free_slots` khe tự do, dành cho ALARM và HELLO.
-  - ALARM khẩn thì gửi ngay ở khe tự do gần nhất, không chờ khe của mình.
+  - Mốc t = 0 là lúc node *nhận xong* beacon. Khe 0 là chỗ của chính beacon. Node có `slot = k` phát trong khe k, tức từ `k·slot_ms` đến `(k+1)·slot_ms`. Nên chờ thêm khoảng 30 ms đầu khe để bù lệch đồng hồ.
+  - **HELLO gửi ở khe riêng của node** (số khe có sẵn trong `keys.h`). Đã thử để HELLO tranh nhau ở khe tự do: 12 node bật cùng lúc tranh 5 khe, mất khoảng 9 chu kỳ mới vào đủ mạng. Gửi ở khe riêng thì vào đủ trong 1 chu kỳ.
+  - Sau khe cuối của node là `free_slots` khe tự do, dành cho ALARM.
+    - ALARM gửi ngay ở **một khe tự do chọn ngẫu nhiên**, không chờ khe của mình.
+    - Không có ACK thì sang chu kỳ sau gửi lại ở **khe riêng**, chỗ chắc chắn không va chạm.
+  - Chỉ bắt đầu phát nếu còn kịp phát xong và nhận ACK trước khi hết khe.
+  - Gateway từ chối chạy nếu `slot_ms` ngắn hơn mức tối thiểu cho DATA + ACK ở SF đang dùng (480 ms ở SF9).
   - Mặc định: 12 node × 2 s + 1 + 5 khe = 36 s, nằm gọn trong chu kỳ 60 s.
   - Laptop có trễ vài chục ms không ảnh hưởng gì, vì mọi node đo thời gian tính từ lúc nhận beacon.
 - **poll** (phương án lùi): laptop gửi POLL lần lượt cho từng node. Node trả DATA ngay, gateway trả ACK như thường.
@@ -135,7 +143,8 @@ Giả lập tham khảo: `sim/bed_modbus_sim.py`.
 
 ## 10. ThingsBoard
 
-- Gateway dùng Gateway MQTT API: chỉ 1 token, các thiết bị con được tạo tự động theo `name`.
+- Gateway dùng Gateway MQTT API: chỉ 1 token, các thiết bị con được tạo tự động theo `name`. Định dạng topic và JSON đã đối chiếu với [tài liệu Gateway MQTT API của ThingsBoard](https://thingsboard.io/docs/edge/reference/gateway-mqtt-api/).
+- Trước khi chạy gateway, chạy `python tools/check_thingsboard.py` để thử token, xem thiết bị con có được tạo không, và thử một lệnh RPC.
 - Lệnh từ web gửi qua RPC, tên method là một trong `buzzer_on`, `buzzer_off`, `set_period`, `blink`, `tare`. Ví dụ params: `5` hoặc `{"arg": 5}`.
 - Lệnh cho lót giày được trả lời ngay là "đã xếp hàng". Kết quả thật hiện ở telemetry `event_code` = `CMD_DONE` hoặc `CMD_FAILED`.
 - Telemetry của mỗi bản ghi có thêm `risk_score`, `risk_level`, `risk_reasons`.

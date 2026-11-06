@@ -57,6 +57,8 @@ Lệnh thứ hai xuất toàn bộ số liệu ra CSV để vẽ đồ thị cho
 | `mosquitto/` | Cấu hình Mosquitto có mật khẩu + ACL (tuần 3) |
 | `tools/genkeys.py` | Sinh khóa |
 | `tools/make_vectors.py` | Sinh `docs/test_vectors.md` |
+| `tools/check_thingsboard.py` | Thử token + thiết bị con + lệnh RPC trên ThingsBoard trong 1 phút |
+| `iomt_gateway/airtime.py` | Thời gian phát LoRa, khe tối thiểu, lý thuyết ALOHA |
 
 ## Kiểm thử
 
@@ -65,30 +67,33 @@ pip install -r requirements-dev.txt
 python -m pytest -q
 ```
 
-Có 43 bài test, gồm:
+Có 45 bài test, gồm:
 - CMAC theo RFC 4493, đảo từng bit thì MIC phải sai.
 - Gói cũ, gói giả, node lạ đều bị chặn; gateway khởi động lại vẫn nhớ FCnt.
 - Lệnh đi kèm ACK, gửi lại, xác nhận.
 - Mất mạng không mất dữ liệu.
 
-## Đã thử những gì (05/11, trên Linux với bộ giả lập)
+## Đã thử những gì
 
-| Bài | Kết quả |
-|---|---|
-| 12 lót giày giả + 6 kẹp tay giả + 2 giường giả chạy cùng lúc | 20/20 node ONLINE; LoRa 231/231 gói có ACK |
-| Tắt "ThingsBoard" (một Mosquitto đóng vai cloud) 15 giây | Không mất bản ghi nào, 213 bản ghi trong lúc mất mạng được gửi bù |
-| Mất 20% gói mỗi chiều | Node gửi lại, gateway trả ACK lại, **không lưu trùng** (171 bản ghi = 171 cặp node/fcnt) |
-| Phát lại gói cũ / gói sai khóa / node lạ, mỗi loại 10 gói | Chặn 10/10 mỗi loại |
-| Lệnh từ RPC xuống lót giày, kẹp tay, giường | Cả 3 làm đúng; lót giày báo CMD_DONE |
-| Ngã + giường cùng bệnh nhân | Có thêm ghi chú kiểm tra chéo ("giường vẫn báo đang nằm"...) |
-| Modbus RTU qua cặp cổng nối tiếp ảo (socat) | 8/8 lần đọc đúng, ghi lệnh trừ bì đúng |
-| Mosquitto có mật khẩu + ACL | Sai mật khẩu bị từ chối; giả danh kẹp tay khác bị chặn |
+Chi tiết ở `docs/ket_qua_thu_nghiem.md`. Tóm tắt:
 
-**Chưa thử trên phần cứng thật**:
-- Firmware cầu nối mới chỉ được kiểm tra cú pháp với RadioLib 7.8.1, chưa nạp lên ESP32.
-- Chưa chạy trên Windows.
-- Chưa nối ThingsBoard cloud thật.
-- Chế độ tdma và poll mới có unit test, chưa chạy với node thật.
+- Firmware cầu nối biên dịch được với core esp32 3.3.12 + RadioLib 7.8.1, 0 cảnh báo.
+- 45 test đạt trên Python 3.11 và 3.13.
+- Chạy được 20 node trên đủ 3 kiểu kết nối.
+- Mất mạng không mất dữ liệu; mất gói không lưu trùng; chặn 10/10 gói cũ, gói giả, node lạ.
+- Rút USB cầu nối thì gateway tự nối lại.
+- Với 12 lót giày giả lập:
+
+  | Chế độ | Gateway nhận được |
+  |---|---|
+  | tdma | 100% |
+  | poll | 98,5% |
+  | free | 83% |
+
+**Chưa thử:**
+- Mạch thật.
+- Windows thật (GitHub Actions chỉ chạy test trên Windows).
+- ThingsBoard cloud thật. Dùng `python tools/check_thingsboard.py` để thử nhanh.
 
 ## Lỗi hay gặp
 

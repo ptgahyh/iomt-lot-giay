@@ -1,0 +1,39 @@
+# Tự chạy kiểm thử mỗi lần đẩy code lên GitHub (tab Actions), trên cả Windows và Linux.
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  gateway:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python: ["3.11", "3.13"]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: gateway
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+      - name: Gói mẫu trong docs vẫn khớp code
+        shell: bash
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python tools/make_vectors.py | diff --strip-trailing-cr - ../docs/test_vectors.md
+
+  node-c-code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libmbedtls-dev
+      - name: iomt_packet.h khớp từng byte với gateway
+        working-directory: node_a
+        run: gcc -Wall -Wextra -I. test_packet_host.c -lmbedcrypto -o t && ./t
