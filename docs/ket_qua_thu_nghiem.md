@@ -19,6 +19,8 @@ Bài học khi biên dịch: Arduino tự sinh prototype cho các hàm trong fil
 
 45/45 test đạt trên **Python 3.11.18** (bản thấp nhất kế hoạch yêu cầu) và trên Python 3.13, với đúng các phiên bản trong `gateway/requirements.txt`. Chạy toàn hệ thống trên Python 3.11 cũng không có lỗi.
 
+Ngày 07/11, GitHub Actions chạy lại trên **Windows** và Linux với Python 3.11 và 3.13: cả 4 tổ hợp đều đạt 45/45. Code C của lót giày cũng ra khớp từng byte với gateway.
+
 ## 3. So sánh 3 cách dùng kênh LoRa
 
 **Điều kiện chung:**
@@ -75,5 +77,5 @@ Gồm 12 lót giày, 6 kẹp tay qua Mosquitto, 2 giường qua Modbus. Một Mo
 ## 6. Chưa làm được, cần người có phần cứng hoặc máy Windows
 
 - **Nạp firmware lên ESP32 + Ra-02 thật:** đo RSSI, khoảng cách trên 20 m, 100 gói ở 5 m nhận ≥ 99%.
-- **Chạy trên Windows:** GitHub Actions trong repo tự chạy test trên Windows mỗi lần đẩy code, nhưng chạy thật với cổng COM thì phải làm trên laptop.
+- **Chạy thật trên Windows với cổng COM:** phải làm trên laptop. Phần test thì GitHub Actions đã chạy trên Windows (mục 2).
 - **ThingsBoard cloud thật:** làm theo mục 5.

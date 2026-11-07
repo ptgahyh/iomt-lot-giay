@@ -78,7 +78,7 @@ Có 45 bài test, gồm:
 Chi tiết ở `docs/ket_qua_thu_nghiem.md`. Tóm tắt:
 
 - Firmware cầu nối biên dịch được với core esp32 3.3.12 + RadioLib 7.8.1, 0 cảnh báo.
-- 45 test đạt trên Python 3.11 và 3.13.
+- 45 test đạt trên Python 3.11 và 3.13, cả Windows lẫn Linux (GitHub Actions).
 - Chạy được 20 node trên đủ 3 kiểu kết nối.
 - Mất mạng không mất dữ liệu; mất gói không lưu trùng; chặn 10/10 gói cũ, gói giả, node lạ.
 - Rút USB cầu nối thì gateway tự nối lại.
@@ -92,7 +92,7 @@ Chi tiết ở `docs/ket_qua_thu_nghiem.md`. Tóm tắt:
 
 **Chưa thử:**
 - Mạch thật.
-- Windows thật (GitHub Actions chỉ chạy test trên Windows).
+- Chạy gateway với cổng COM thật trên Windows.
 - ThingsBoard cloud thật. Dùng `python tools/check_thingsboard.py` để thử nhanh.
 
 ## Lỗi hay gặp
