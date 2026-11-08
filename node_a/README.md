@@ -44,3 +44,7 @@ Trên Linux/WSL:
 sudo apt install libmbedtls-dev
 gcc -I. test_packet_host.c -lmbedcrypto -o t && ./t
 ```
+
+## Kiểm tra mạch lót giày BME3
+
+Xem `KIEM-TRA-MACH-BME3.md`: đo bằng đồng hồ, dò chân FSR bằng `fsr_pin_scan/fsr_pin_scan.ino`, tiêu chí đạt và bảng ghi.
