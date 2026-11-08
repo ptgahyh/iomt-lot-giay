@@ -4,14 +4,14 @@ TV2 chạy ngày 05–07/11/2026 trên máy Linux, dùng các bộ giả lập t
 
 ## 1. Biên dịch firmware ESP32
 
-Biên dịch bằng arduino-cli 1.2.2, core esp32 3.3.12, board "ESP32 Dev Module".
+Biên dịch bằng arduino-cli 1.2.2, core esp32 3.3.12, RadioLib 7.8.1, board "ESP32 Dev Module" (`esp32:esp32:esp32`). Biên dịch lại ngày 08/11 sau khi chuyển SF7 (`LORA_SF 7`, 433,5 MHz, 14 dBm):
 
 | Sketch | Kết quả |
 |---|---|
-| `gateway/bridge_firmware/lora_bridge` (RadioLib 7.8.1) | Biên dịch được, 0 cảnh báo, 311 KB (23% flash). Hàm ngắt `onPacket` nằm trong IRAM |
-| `node_a/packet_selftest` + `iomt_packet.h` | Biên dịch được, 291 KB. mbedtls trong core có bật CMAC (`CONFIG_MBEDTLS_CMAC_C=y`) |
+| `gateway/bridge_firmware/lora_bridge` (RadioLib 7.8.1) | Biên dịch được, 0 cảnh báo, 311 KB (23% flash), RAM 24 KB (7%). Hàm ngắt `onPacket` nằm trong IRAM |
+| `node_a/packet_selftest` + `iomt_packet.h` | Biên dịch được, 291 KB (22% flash), RAM 22 KB (6%). mbedtls trong core có bật CMAC (`CONFIG_MBEDTLS_CMAC_C=y`) |
 
-**Chưa nạp lên mạch thật.** Bảng trên là kết quả biên dịch ở SF9 (05–07/11). Từ khi chuyển sang SF7 (08/11), `lora_bridge.ino` mới chỉ đổi 3 hằng số (tần số, SF, công suất) và **chưa biên dịch lại**: máy chạy bản đo SF7 không có bộ biên dịch ESP32.
+Kích thước ra đúng bằng bản SF9 (chỉ đổi hằng số). **Chưa nạp lên mạch thật.**
 
 Bài học khi biên dịch: Arduino tự sinh prototype cho các hàm trong file .ino, và bước này sinh sai khi hàm có thuộc tính đặt ở dòng riêng (`ICACHE_RAM_ATTR` nằm trên dòng `void onPacket()`). Đã sửa bằng cách khai báo trước mọi hàm ở đầu file. Lót giày của TV1 cũng nên làm như vậy.
 
@@ -90,20 +90,26 @@ Ngoài ra, thời gian chờ ACK được nâng từ 600 ms lên **800 ms** khi 
 
 ## 4. Toàn hệ thống (20 node, 3 kiểu kết nối)
 
-> Mục này đo ở **SF9 (05–07/11) và chưa chạy lại ở SF7**: cần Mosquitto và nhiều bước thủ công. Các kết quả về bảo mật, mất mạng, lệnh, ACL, Modbus không phụ thuộc SF, nhưng các con số về LoRa (ví dụ "20/20 ONLINE" khi nhiều node gửi cùng lúc) nên chạy lại.
+Gồm 12 lót giày, 6 kẹp tay qua Mosquitto, 2 giường qua Modbus. Bản SF9 (05–07/11) dùng thêm một Mosquitto thứ hai đóng vai ThingsBoard.
 
-Gồm 12 lót giày, 6 kẹp tay qua Mosquitto, 2 giường qua Modbus. Một Mosquitto thứ hai đóng vai ThingsBoard.
+**Chạy lại ngày 08/11 ở SF7** (chỉ những bài có dính tới kênh LoRa):
+- 20 node cùng lúc: tdma (khe 350 ms, beacon 15 s), Mosquitto 2.0.18 có mật khẩu và ACL lấy từ `gateway/mosquitto/acl.conf`, giường qua Modbus TCP, chạy 100 s, tắt phần ThingsBoard.
+- Ba bài còn lại chỉ chạy phần LoRa (12 lót giày, chế độ free, 100 s). Với bài tấn công, tắt mô hình va chạm (`--no-collisions`) để cả 10 gói tấn công đều tới được gateway.
 
-| Bài | Kết quả |
-|---|---|
-| 20 node chạy cùng lúc | 20/20 ONLINE |
-| Tắt "ThingsBoard" 15 s | Không mất bản ghi nào; dữ liệu trong lúc mất mạng được gửi bù sau khi nối lại (tối đa 10 s) |
-| Mất 20% gói mỗi chiều | Không lưu trùng (171 bản ghi = 171 cặp node/fcnt) |
-| Phát lại gói cũ, gói sai khóa, node lạ (mỗi loại 10 gói) | Chặn 10/10 mỗi loại; 0 bản ghi bị lưu thêm |
-| Lệnh từ web xuống lót giày, kẹp tay, giường | Cả 3 làm đúng; lót giày báo CMD_DONE |
-| Mosquitto có mật khẩu + ACL | Sai mật khẩu bị từ chối; kẹp tay 21 không ghi được và không nghe trộm được topic của 22 |
-| Modbus RTU qua cổng nối tiếp ảo | 8/8 lần đọc đúng, ghi lệnh trừ bì đúng |
-| Gateway đọc cổng nối tiếp thật (pty), "rút USB" 10 s | Gateway tự nối lại 5 s sau khi cắm; các node quay lại ONLINE |
+| Bài | SF9 (05–07/11) | SF7 (08/11) |
+|---|---|---|
+| 20 node chạy cùng lúc | 20/20 ONLINE | **20/20 ONLINE**; đã lưu 63 bản ghi lót giày, 120 kẹp tay, 104 giường |
+| Mất 20% gói mỗi chiều | Không lưu trùng (171 bản ghi = 171 cặp node/fcnt) | Không lưu trùng (69 bản ghi = 69 cặp node/fcnt) |
+| Gói giả sai khóa (10 gói) | Chặn 10/10; 0 bản ghi bị lưu thêm | BAD_MIC 10/10; 0 bản ghi bị lưu thêm |
+| Node lạ (10 gói) | Chặn 10/10; 0 bản ghi bị lưu thêm | UNKNOWN_NODE 10/10; 0 bản ghi bị lưu thêm |
+| Phát lại gói cũ (10 gói) | Chặn 10/10; 0 bản ghi bị lưu thêm | REPLAY 8/10; 2 gói còn lại trùng đúng gói mới nhất nên bị coi là gửi lại (DUPLICATE, trả ACK, không lưu, xem `protocol.md` mục 5). 0 bản ghi bị lưu thêm |
+| Tắt "ThingsBoard" 15 s | Không mất bản ghi nào; dữ liệu trong lúc mất mạng được gửi bù sau khi nối lại (tối đa 10 s) | chưa chạy lại |
+| Lệnh từ web xuống lót giày, kẹp tay, giường | Cả 3 làm đúng; lót giày báo CMD_DONE | chưa chạy lại |
+| Mosquitto: sai mật khẩu, kẹp tay 21 ghi/đọc topic của 22 | Sai mật khẩu bị từ chối; kẹp tay 21 không ghi được và không nghe trộm được topic của 22 | chưa chạy lại (chỉ kiểm tra kẹp tay đăng nhập đúng và gửi được) |
+| Modbus RTU qua cổng nối tiếp ảo | 8/8 lần đọc đúng, ghi lệnh trừ bì đúng | chưa chạy lại |
+| Gateway đọc cổng nối tiếp thật (pty), "rút USB" 10 s | Gateway tự nối lại 5 s sau khi cắm; các node quay lại ONLINE | chưa chạy lại |
+
+Các bài "chưa chạy lại" không phụ thuộc SF (cloud, lệnh, ACL, Modbus, cổng nối tiếp), nên kết quả SF9 vẫn dùng được. Mỗi bài SF7 chạy 1 lần.
 
 ## 5. ThingsBoard
 
