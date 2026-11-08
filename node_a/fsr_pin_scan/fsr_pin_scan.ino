@@ -31,6 +31,8 @@ uint16_t base[N];
 bool active[N];
 
 void printTable();
+void printNow();
+void measureBase();
 
 uint16_t readAvg(int pin) {
   uint32_t s = 0;
@@ -59,14 +61,14 @@ void measureBase() {
 void printTable() {
   Serial.println("# chan : nen(0..4095)  dien_ap_uoc_tinh");
   for (int i = 0; i < N; i++) {
-    Serial.printf("# GPIO%-2d: %4u  ~%.2f V\n", PINS[i], base[i], base[i] * 3.1f / 4095.0f);
+    Serial.printf("# GPIO%-2d: %4u  ~%.2f V\n", PINS[i], (unsigned)base[i], base[i] * 3.1f / 4095.0f);
   }
 }
 
 void printNow() {
   Serial.println("# chan : bay_gio  nen");
   for (int i = 0; i < N; i++) {
-    Serial.printf("# GPIO%-2d: %4u  %4u\n", PINS[i], readAvg(PINS[i]), base[i]);
+    Serial.printf("# GPIO%-2d: %4u  %4u\n", PINS[i], (unsigned)readAvg(PINS[i]), (unsigned)base[i]);
   }
 }
 
@@ -92,7 +94,7 @@ void loop() {
     if (!active[i] && d > JUMP) {
       active[i] = true;
       Serial.printf(">>> GPIO%d DANG BI AN: nen %u -> %d (~%.2f V)\n",
-                    PINS[i], base[i], v, v * 3.1f / 4095.0f);
+                    PINS[i], (unsigned)base[i], v, v * 3.1f / 4095.0f);
     } else if (active[i] && d < JUMP / 2) {
       active[i] = false;
       Serial.printf("    GPIO%d nha ra (%d)\n", PINS[i], v);
