@@ -8,16 +8,16 @@ Bản **v0.1** do TV2 đề xuất ngày 05/11. TV1 và TV2 cùng duyệt. Muố
 
 | Thông số | Giá trị |
 |---|---|
-| Tần số | 433,0 MHz |
+| Tần số | 433,5 MHz |
 | Băng thông | 125 kHz |
-| Spreading factor | 9 |
+| Spreading factor | 7 |
 | Coding rate | 4/5 |
 | Sync word | 0x12 (mạng riêng) |
-| Công suất | 17 dBm |
+| Công suất | 14 dBm (25 mW) |
 | Preamble | 8 |
 | CRC | bật |
 
-Thời gian phát ở SF9 khoảng 185 ms cho gói 19 byte và 145 ms cho ACK 10 byte (công thức trong `gateway/iomt_gateway/airtime.py`).
+Thời gian phát ở SF7 khoảng 51 ms cho gói 19 byte và 41 ms cho ACK 10 byte (công thức trong `gateway/iomt_gateway/airtime.py`).
 
 - Sau khi phát xong, node nghe ACK trong **800 ms**. Trên bộ giả lập có 12 node, ACK về sau trung vị khoảng 450 ms, p95 khoảng 630 ms (tính từ lúc bắt đầu phát), nên 600 ms là quá sát.
 - Không có ACK thì chờ ngẫu nhiên **0,5–2 s × số lần đã thử**, rồi gửi lại **y nguyên gói cũ** (cùng FCnt). Gửi tối đa 3 lần.
@@ -96,7 +96,7 @@ Phần mã hóa nội dung (AES) nằm đầu danh sách được cắt trong k�
     - ALARM gửi ngay ở **một khe tự do chọn ngẫu nhiên**, không chờ khe của mình.
     - Không có ACK thì sang chu kỳ sau gửi lại ở **khe riêng**, chỗ chắc chắn không va chạm.
   - Chỉ bắt đầu phát nếu còn kịp phát xong và nhận ACK trước khi hết khe.
-  - Gateway từ chối chạy nếu `slot_ms` ngắn hơn mức tối thiểu cho DATA + ACK ở SF đang dùng (480 ms ở SF9).
+  - Gateway từ chối chạy nếu `slot_ms` ngắn hơn mức tối thiểu cho DATA + ACK ở SF đang dùng (khoảng 245 ms ở SF7; 480 ms ở SF9).
   - Mặc định: 12 node × 2 s + 1 + 5 khe = 36 s, nằm gọn trong chu kỳ 60 s.
   - Laptop có trễ vài chục ms không ảnh hưởng gì, vì mọi node đo thời gian tính từ lúc nhận beacon.
 - **poll** (phương án lùi): laptop gửi POLL lần lượt cho từng node. Node trả DATA ngay, gateway trả ACK như thường.
@@ -106,7 +106,7 @@ Phần mã hóa nội dung (AES) nằm đầu danh sách được cắt trong k�
 Dạng dòng chữ, 115200 baud. Xem `gateway/bridge_firmware/lora_bridge/lora_bridge.ino`.
 
 ```
-ESP32 -> laptop:  READY lora_bridge 0.1 433.0MHz SF9 BW125
+ESP32 -> laptop:  READY lora_bridge 0.1 433.5MHz SF7 BW125
                   RX 010101000003D204786E342D110D57452F1287 -67 7.5
                   TXOK | TXERR <mã>
                   # ghi chú

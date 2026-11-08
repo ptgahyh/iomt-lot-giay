@@ -12,7 +12,7 @@ rồi chạy (từ thư mục gốc repo):
 Chế độ (free / tdma / poll) lấy theo [lora].mode trong config, giống gateway.
 
 Mô hình kênh sóng:
-  - mỗi gói chiếm kênh đúng thời gian phát thật (công thức Semtech, --sf mặc định 9)
+  - mỗi gói chiếm kênh đúng thời gian phát thật (công thức Semtech, --sf mặc định lấy từ config (SF7))
   - hai gói chồng lên nhau về thời gian thì CẢ HAI hỏng (va chạm, không tính capture)
   - cầu nối và node chỉ có 1 radio: đang phát thì không nghe được
   - --loss: mất thêm ngẫu nhiên mỗi chiều (nhiễu, xa)
@@ -222,7 +222,7 @@ class SimNode:
             if await self.send_once(frame, fcnt):
                 return True
             if deadline is None:
-                # lùi ngẫu nhiên, cửa sổ lớn gấp vài lần thời gian 1 lượt DATA+ACK (~0,5 s ở SF9)
+                # lùi ngẫu nhiên, cửa sổ lớn gấp vài lần thời gian 1 lượt DATA+ACK (~0,5 s)
                 # và tăng dần theo số lần thử; cửa sổ nhỏ (0,1-0,4 s) làm các node va chạm dây chuyền
                 await asyncio.sleep(random.uniform(BACKOFF_MIN_S, BACKOFF_MAX_S) * (i + 1))
         return False

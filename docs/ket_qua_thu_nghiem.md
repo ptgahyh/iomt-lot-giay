@@ -79,3 +79,5 @@ Gồm 12 lót giày, 6 kẹp tay qua Mosquitto, 2 giường qua Modbus. Một Mo
 - **Nạp firmware lên ESP32 + Ra-02 thật:** đo RSSI, khoảng cách trên 20 m, 100 gói ở 5 m nhận ≥ 99%.
 - **Chạy thật trên Windows với cổng COM:** phải làm trên laptop. Phần test thì GitHub Actions đã chạy trên Windows (mục 2).
 - **ThingsBoard cloud thật:** làm theo mục 5.
+
+> **Lưu ý (nhánh chuyển SF7):** toàn bộ số liệu giả lập ở mục 3 và 4 được đo ở **SF9** (bản cũ của giao thức). Khi nhóm chốt SF7, cần chạy lại mục 3 (so sánh free / poll / tdma) và có thể rút ngắn `slot_ms`, thời gian chờ ACK.
