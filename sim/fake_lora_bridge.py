@@ -8,6 +8,8 @@ rồi chạy (từ thư mục gốc repo):
     python sim/fake_lora_bridge.py -c gateway/config.toml --attack replay  # thử chặn gói cũ
     python sim/fake_lora_bridge.py -c gateway/config.toml --attack forge   # gói sai MIC
     python sim/fake_lora_bridge.py -c gateway/config.toml --attack unknown # node lạ
+    python sim/fake_lora_bridge.py -c gateway/config.toml --skip-first --real-port COM7
+        # ghép lót giày thật cắm USB (node_a/lot_giay_usb) làm node 1, cùng 11 node giả
 
 Chế độ (free / tdma / poll) lấy theo [lora].mode trong config, giống gateway.
 
@@ -35,6 +37,7 @@ import asyncio
 import random
 import secrets
 import sys
+import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -92,12 +95,70 @@ class Channel:
         return True
 
 
+class RealInsole:
+    """Lót giày thật cắm USB, chạy node_a/lot_giay_usb. Nó in "RX <hex> ..." như một cầu nối;
+    ở đây chuyển nguyên dòng đó lên gateway, và chuyển mọi "TX <hex>" của gateway xuống nó."""
+
+    def __init__(self, port: str, loop: asyncio.AbstractEventLoop, bridge: "Bridge"):
+        import serial                      # pyserial, đã có trong gateway/requirements.txt
+        self.serial_mod = serial
+        self.port = port
+        self.loop = loop
+        self.bridge = bridge
+        self.ser = None
+        self.lines = 0
+        threading.Thread(target=self._run, name="real-insole", daemon=True).start()
+
+    def _open(self):
+        ser = self.serial_mod.serial_for_url(self.port, do_not_open=True, baudrate=115200, timeout=0.2)
+        try:                               # không reset ESP32 khi mở cổng
+            ser.dtr = False
+            ser.rts = False
+        except (AttributeError, ValueError, self.serial_mod.SerialException):
+            pass
+        ser.open()
+        return ser
+
+    def _run(self) -> None:
+        while True:
+            try:
+                self.ser = self._open()
+                print(f"[lót giày thật] đã mở {self.port}", flush=True)
+                buf = b""
+                while True:
+                    buf += self.ser.read(256)
+                    while b"\n" in buf:
+                        raw, buf = buf.split(b"\n", 1)
+                        self._line(raw.decode("ascii", "replace").strip())
+            except Exception as e:  # noqa: BLE001  — rút USB, sai cổng, cổng đang bị Serial Monitor chiếm
+                print(f"[lót giày thật] {self.port}: {e}. Thử lại sau 3 s", flush=True)
+                self.ser = None
+                time.sleep(3)
+
+    def _line(self, line: str) -> None:
+        if line.startswith("RX "):
+            self.lines += 1
+            self.loop.call_soon_threadsafe(self.bridge.forward_line, line)
+        elif line.startswith("# ") and not line.startswith("# F "):
+            print(f"[lót giày thật] {line[2:]}", flush=True)
+
+    def send(self, frame: bytes) -> None:
+        ser = self.ser
+        if ser is None:
+            return
+        try:
+            ser.write(f"TX {frame.hex().upper()}\n".encode())
+        except Exception:  # noqa: BLE001
+            pass
+
+
 class Bridge:
     """ESP32 cầu nối giả: nghe kênh, in RX lên 'cổng USB', nhận TX từ gateway."""
 
     def __init__(self, ch: Channel):
         self.ch = ch
         self.writer: asyncio.StreamWriter | None = None
+        self.real: RealInsole | None = None
         self.nodes: list[SimNode] = []
         self.history: dict[int, list[bytes]] = {}   # gói thật đã phát, để giả lập kẻ nghe trộm
 
@@ -112,7 +173,13 @@ class Bridge:
         self.writer.write(f"RX {frame.hex().upper()} {rssi:.0f} {snr:.1f}\n".encode())
         await self.writer.drain()
 
+    def forward_line(self, line: str) -> None:
+        if self.writer is not None:
+            self.writer.write((line + "\n").encode())
+
     async def gw_transmit(self, frame: bytes) -> None:
+        if self.real is not None:
+            self.real.send(frame)                      # dây USB: không va chạm, không mất
         tx = await self.ch.transmit("gw", frame)
         if tx.collided:
             return
@@ -389,6 +456,7 @@ async def main() -> None:
     ap.add_argument("--nodes", type=int, default=0, help="chỉ chạy N node đầu (0 = tất cả)")
     ap.add_argument("--skip-first", action="store_true",
                     help="bỏ node đầu tiên (đang dùng lót giày thật)")
+    ap.add_argument("--real-port", help="cổng COM của lót giày thật chạy node_a/lot_giay_usb (dùng kèm --skip-first)")
     ap.add_argument("--fall-every", type=int, default=0)
     ap.add_argument("--attack", choices=["replay", "forge", "unknown"])
     ap.add_argument("--report-every", type=float, default=30)
@@ -406,6 +474,8 @@ async def main() -> None:
     bridge = Bridge(ch)
     nodes = [SimNode(bridge, cfg, n.id, n.key, n.slot, args.period, args.fall_every) for n in insoles]
     connected = asyncio.Event()
+    if args.real_port:
+        bridge.real = RealInsole(args.real_port, asyncio.get_running_loop(), bridge)
 
     async def on_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         print("gateway đã nối vào cầu nối giả")
@@ -428,7 +498,8 @@ async def main() -> None:
         bridge.writer = None
 
     server = await asyncio.start_server(on_client, "127.0.0.1", args.port)
-    print(f"cầu nối giả: socket://127.0.0.1:{args.port}, {len(nodes)} node, chế độ {cfg.lora.mode}, "
+    print(f"cầu nối giả: socket://127.0.0.1:{args.port}, {len(nodes)} node giả"
+          f"{' + 1 lót giày thật ở ' + args.real_port if args.real_port else ''}, chế độ {cfg.lora.mode}, "
           f"SF{ch.sf}, va chạm {'bật' if ch.collisions else 'tắt'}. Chờ gateway...")
     await connected.wait()
     tasks = [asyncio.create_task(n.run()) for n in nodes]
