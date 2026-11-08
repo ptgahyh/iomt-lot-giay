@@ -40,12 +40,12 @@
 
 // ------------------------------------------------------------ thông số radio
 // PHẢI GIỐNG HỆT trên lót giày và các bộ giả lập E1/E1b (docs/protocol.md mục 1).
-#define LORA_FREQ_MHZ   433.0
+#define LORA_FREQ_MHZ   433.5
 #define LORA_BW_KHZ     125.0
-#define LORA_SF         9
+#define LORA_SF         7
 #define LORA_CR         5        // 4/5
 #define LORA_SYNC_WORD  0x12     // mạng riêng (không phải LoRaWAN)
-#define LORA_POWER_DBM  17
+#define LORA_POWER_DBM  14       // 25 mW, theo giới hạn trong kế hoạch (cần kiểm tra Thông tư 08/2021)
 #define LORA_PREAMBLE   8
 
 #define FW_VERSION "lora_bridge 0.1"
@@ -152,7 +152,7 @@ void handleLine(char* s) {
       pkt[i] = (uint8_t)((a << 4) | b);
     }
     if (rxFlag) handleRx();                // có gói vừa tới thì in ra trước, kẻo phát đè mất
-    int16_t st = radio.transmit(pkt, n);   // chặn tới khi phát xong (~150 ms ở SF9)
+    int16_t st = radio.transmit(pkt, n);   // chặn tới khi phát xong (~40 đến 50 ms ở SF7)
     if (st == RADIOLIB_ERR_NONE) {
       Serial.println("TXOK");
     } else {

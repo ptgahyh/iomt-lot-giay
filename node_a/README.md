@@ -21,7 +21,7 @@ Core ESP32 3.x (Boards Manager > esp32 by Espressif) đã bật sẵn CMAC. Nế
 
 ## Việc node phải làm đúng, nếu không gateway sẽ chặn
 
-- [ ] Radio đúng thông số ở protocol.md mục 1 (433 MHz, SF9, BW125, CR 4/5, sync 0x12).
+- [ ] Radio đúng thông số ở protocol.md mục 1 (433,5 MHz, SF7, 14 dBm, BW125, CR 4/5, sync 0x12).
 - [ ] Mỗi lần khởi động gửi **HELLO** (fcnt = 0, nonce = `esp_random()`), chờ ACK rồi mới gửi DATA.
 - [ ] DATA đếm fcnt từ 1, tăng 1 mỗi gói **mới**. Gửi lại vì mất ACK thì giữ **nguyên gói cũ, nguyên fcnt**.
 - [ ] Phát xong thì nghe ACK 800 ms. Không có thì chờ ngẫu nhiên 0,5–2 s × số lần đã thử rồi gửi lại, tối đa 3 lần.
