@@ -5,6 +5,7 @@ Từ thư mục gốc repo (cần đã `pip install -r gateway/requirements.txt`
     python sim/chay_demo.py --wrist          # thêm 6 kẹp tay, cần Mosquitto đang chạy (xem gateway/README.md)
     python sim/chay_demo.py --mode free      # so sánh: node gửi tự do, hay va chạm
     python sim/chay_demo.py --no-browser     # không tự mở trình duyệt
+    python sim/chay_demo.py --lot-giay-that COM7   # lót giày thật cắm USB (node_a/lot_giay_usb) làm node 1
 
 Script tự tạo cấu hình riêng trong thư mục demo_run/ (không đụng gateway/config.toml), chạy
 giường giả, cầu nối LoRa giả, gateway và bảng điều khiển; log từng phần nằm trong demo_run/*.log.
@@ -56,6 +57,8 @@ def main() -> int:
     ap.add_argument("--modbus-port", type=int, default=5020)
     ap.add_argument("--web-port", type=int, default=8080)
     ap.add_argument("--no-browser", action="store_true")
+    ap.add_argument("--lot-giay-that", metavar="COM", help="cổng COM của lót giày thật chạy node_a/lot_giay_usb; "
+                    "nó thay node 1, 11 lót giày còn lại vẫn giả")
     a = ap.parse_args()
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -78,7 +81,8 @@ def main() -> int:
     print("Đang khởi động...")
     start("giuong", [py, "-u", "sim/bed_modbus_sim.py", "--tcp", str(a.modbus_port), "--step", "20"])
     start("cau_noi_lora", [py, "-u", "sim/fake_lora_bridge.py", "-c", str(cfg), "--port", str(a.lora_port),
-                           "--period", "5", "--fall-every", str(a.fall_every), "--report-every", "30"])
+                           "--period", "5", "--fall-every", str(a.fall_every), "--report-every", "30"]
+          + (["--skip-first", "--real-port", a.lot_giay_that] if a.lot_giay_that else []))
     time.sleep(2)
     start("gateway", [py, "-u", "-m", "iomt_gateway", "-c", str(cfg)], cwd=REPO / "gateway")
     start("bang_dieu_khien", [py, "-u", "-m", "iomt_gateway.dashboard", "-c", str(cfg), "--port", str(a.web_port)],
@@ -95,6 +99,8 @@ def main() -> int:
     if not a.no_browser:
         webbrowser.open(url)
     print(f"Chế độ LoRa: {a.mode}. Bảng điều khiển: {url}")
+    if a.lot_giay_that:
+        print(f"Lót giày thật ở {a.lot_giay_that} là 'Lot giay 01'. Log của nó trong demo_run/cau_noi_lora.log")
     print("Bấm Ctrl+C để dừng. Log từng phần ở thư mục demo_run/.\n")
     signal.signal(signal.SIGTERM, lambda *_: (_ for _ in ()).throw(KeyboardInterrupt()))
     try:
