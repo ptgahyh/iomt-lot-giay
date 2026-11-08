@@ -47,6 +47,16 @@ Gateway in ra từng node chuyển sang ONLINE, các báo động, và cứ mỗ
 
 Bộ giả lập LoRa có tính cả va chạm sóng. Ở chế độ `free`, 12 node gửi dày sẽ va chạm nhiều, đúng như ngoài đời. Muốn so sánh 3 chế độ thì đổi `[lora] mode` thành `tdma` hoặc `poll`. Kết quả đã đo nằm ở `docs/ket_qua_thu_nghiem.md`.
 
+## Demo nhanh bằng một lệnh (có bảng điều khiển trên trình duyệt)
+
+Từ thư mục gốc repo, sau khi đã `pip install -r gateway/requirements.txt`:
+
+```bat
+python sim\chay_demo.py
+```
+
+Lệnh này tự chạy giường giả, cầu nối LoRa giả (12 lót giày, chia khe tdma), gateway và bảng điều khiển, rồi mở trình duyệt ở http://127.0.0.1:8080. Không đụng `gateway\config.toml`. Thêm `--wrist` để có 6 kẹp tay (cần Mosquitto, xem `gateway/README.md`), `--mode free` để xem chế độ gửi tự do hay va chạm. Bấm Ctrl+C để dừng. Bảng điều khiển (`gateway/iomt_gateway/dashboard.py`) chỉ đọc file SQLite của gateway, nên dùng được cả khi chạy gateway với mạch thật: `cd gateway && python -m iomt_gateway.dashboard -c config.toml`.
+
 ## Quy tắc chung
 
 - Không đẩy `config.toml`, `keys.h`, `passwd` lên GitHub (`.gitignore` đã chặn sẵn).
