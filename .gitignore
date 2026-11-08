@@ -28,3 +28,4 @@ build/
 *.bin
 .DS_Store
 Thumbs.db
+demo_run/
