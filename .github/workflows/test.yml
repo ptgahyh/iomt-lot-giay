@@ -23,6 +23,9 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: pip install -r requirements-dev.txt
       - run: python -m pytest -q
+      - name: Công cụ đo tầm xa
+        working-directory: .
+        run: python -m pytest tools/do_tam_xa -q
       - name: Gói mẫu trong docs vẫn khớp code
         shell: bash
         env:
