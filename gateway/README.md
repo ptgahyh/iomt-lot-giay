@@ -29,6 +29,11 @@ Sửa `config.toml`:
 - `[cloud] token`: lấy trên ThingsBoard. Vào Devices, bấm +, tạo thiết bị "Gateway", **tick "Is gateway"**, rồi copy Access token.
 - `[[nodes]]`: sổ đăng ký 20 node. Mỗi node phải có `id` và `name` không trùng.
 
+## Cài đặt trên Raspberry Pi (gateway không phải laptop)
+
+Một lệnh `bash gateway/pi/cai_dat.sh` dựng môi trường Python, Mosquitto có mật khẩu + ACL và dịch vụ
+tự chạy khi cắm điện. Xem `pi/HUONG-DAN-PI.md`. Đã thử trên máy Linux, chưa thử trên Pi thật.
+
 ## Chạy
 
 ```bat
@@ -55,6 +60,7 @@ Lệnh thứ hai xuất toàn bộ số liệu ra CSV để vẽ đồ thị cho
 | `iomt_gateway/app.py` | Ghép tất cả, chia luồng |
 | `bridge_firmware/lora_bridge/` | Firmware ESP32 + Ra-02 làm cầu nối |
 | `mosquitto/` | Cấu hình Mosquitto có mật khẩu + ACL (tuần 3) |
+| `pi/` | Script cài lên Raspberry Pi, dịch vụ systemd, cấu hình Mosquitto cho Linux |
 | `tools/genkeys.py` | Sinh khóa |
 | `tools/make_vectors.py` | Sinh `docs/test_vectors.md` |
 | `tools/check_thingsboard.py` | Thử token + thiết bị con + lệnh RPC trên ThingsBoard trong 1 phút |

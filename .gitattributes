@@ -1,0 +1,4 @@
+# Script chạy trên Linux phải giữ xuống dòng kiểu LF dù lấy code về bằng Windows
+*.sh text eol=lf
+*.service text eol=lf
+gateway/pi/*.conf text eol=lf
