@@ -1,5 +1,16 @@
 # Node A: lót giày LoRa (TV1)
 
+## Firmware đầy đủ: `lot_giay_lora/`
+
+Đọc 6 FSR ở 200 Hz, tính dáng đi, gửi qua LoRa (free / tdma / poll), làm lệnh trong ACK. Cách nạp và danh sách việc phải làm trên mạch thật: [`lot_giay_lora/HUONG-DAN.md`](lot_giay_lora/HUONG-DAN.md).
+
+Thử không cần mạch:
+
+```
+gcc -Wall -Wextra -I lot_giay_lora test_gait_host.c -lm -o tg && ./tg     # dáng đi, phát hiện ngã
+python thu_may_tinh/chay_thu.py                                           # firmware + gateway thật
+```
+
 Đặc tả gói: `docs/protocol.md`. Gói mẫu để so: `docs/test_vectors.md`.
 
 ## Dùng `iomt_packet.h`

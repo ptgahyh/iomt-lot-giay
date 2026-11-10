@@ -37,3 +37,18 @@ jobs:
       - name: iomt_packet.h khớp từng byte với gateway
         working-directory: node_a
         run: gcc -Wall -Wextra -I. test_packet_host.c -lmbedcrypto -o t && ./t
+      - name: Dáng đi và phát hiện ngã (gait.h, fall.h)
+        working-directory: node_a
+        run: gcc -Wall -Wextra -I lot_giay_lora test_gait_host.c -lm -o tg && ./tg
+
+  node-a-firmware:
+    # Chạy firmware lót giày (bản biên dịch cho máy tính) với gateway thật, cả 3 chế độ kênh.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: sudo apt-get update && sudo apt-get install -y libmbedtls-dev
+      - run: pip install -r gateway/requirements.txt
+      - run: python node_a/thu_may_tinh/chay_thu.py
