@@ -1,0 +1,17 @@
+# Gateway tự chạy khi bật nguồn và tự chạy lại nếu chết. cai_dat.sh thay @USER@ và @GW_DIR@.
+[Unit]
+Description=IoMT gateway (LoRa + MQTT + Modbus -> ThingsBoard)
+After=network.target mosquitto.service
+Wants=mosquitto.service
+
+[Service]
+User=@USER@
+WorkingDirectory=@GW_DIR@
+Environment=PYTHONUNBUFFERED=1
+ExecStart=@GW_DIR@/.venv/bin/python -m iomt_gateway -c config.toml
+Restart=always
+RestartSec=5
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

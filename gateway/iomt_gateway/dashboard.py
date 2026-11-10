@@ -6,7 +6,9 @@ hay tắt bảng này không ảnh hưởng gateway.
     cd gateway
     python -m iomt_gateway.dashboard -c config.toml        rồi mở http://127.0.0.1:8080
 
-Chỉ lắng nghe 127.0.0.1 (chỉ máy này xem được). Không cần cài thêm thư viện.
+Mặc định chỉ lắng nghe 127.0.0.1 (chỉ máy này xem được). Gateway chạy trên Raspberry Pi không
+màn hình thì thêm --host 0.0.0.0 để máy khác trong cùng mạng LAN mở http://<IP của Pi>:8080.
+Trang này không có mật khẩu, chỉ mở ra mạng mình tin. Không cần cài thêm thư viện.
 """
 from __future__ import annotations
 
@@ -213,6 +215,8 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="iomt_gateway.dashboard")
     ap.add_argument("-c", "--config", default="config.toml")
     ap.add_argument("--port", type=int, default=8080)
+    ap.add_argument("--host", default="127.0.0.1",
+                    help="0.0.0.0 để máy khác trong mạng LAN xem được (trang không có mật khẩu)")
     args = ap.parse_args(argv)
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -220,8 +224,9 @@ def main(argv: list[str] | None = None) -> int:
         pass
     cfg = load(args.config)
     db_path = str(Path(cfg.db_path).resolve())      # tính từ thư mục đang đứng, giống gateway
-    srv = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(cfg, db_path))
-    print(f"Bảng điều khiển: http://127.0.0.1:{args.port}  (đọc {db_path}). Bấm Ctrl+C để dừng.")
+    srv = ThreadingHTTPServer((args.host, args.port), make_handler(cfg, db_path))
+    shown = "127.0.0.1" if args.host in ("127.0.0.1", "0.0.0.0") else args.host
+    print(f"Bảng điều khiển: http://{shown}:{args.port}  (đọc {db_path}). Bấm Ctrl+C để dừng.")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

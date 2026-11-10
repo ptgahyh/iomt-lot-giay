@@ -1,0 +1,15 @@
+# Bảng điều khiển web (chỉ đọc SQLite). Mở cho máy trong cùng mạng LAN xem ở cổng 8080.
+[Unit]
+Description=IoMT gateway dashboard
+After=network.target
+
+[Service]
+User=@USER@
+WorkingDirectory=@GW_DIR@
+Environment=PYTHONUNBUFFERED=1
+ExecStart=@GW_DIR@/.venv/bin/python -m iomt_gateway.dashboard -c config.toml --host 0.0.0.0 --port 8080
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
