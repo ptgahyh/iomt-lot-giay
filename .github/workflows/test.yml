@@ -6,6 +6,20 @@ on:
   pull_request:
 
 jobs:
+  node-b-code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -r gateway/requirements-dev.txt
+      - name: Logic kẹp tay (JSON gửi đi, đọc lệnh)
+        working-directory: node_b
+        run: gcc -Wall -Wextra -Werror -Ikep_tay_mqtt test_kep_tay_host.c -o t && ./t
+      - name: Gateway nhận đúng JSON của firmware kẹp tay
+        run: python -m pytest node_b -q
+
   gateway:
     strategy:
       fail-fast: false

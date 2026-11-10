@@ -11,3 +11,16 @@ Topic và định dạng JSON xem `docs/protocol.md` mục 8. Tóm tắt:
 - Tuần 3: đăng nhập Mosquitto với username = id. Cấu hình mẫu ở `gateway/mosquitto/`.
 
 Giả lập tham khảo cho E2: `sim/wrist_mqtt_sim.py`.
+
+## Firmware
+
+`kep_tay_mqtt/` là firmware ESP32 + MAX30102 theo đúng định dạng trên. Cách nạp và chỉnh:
+`kep_tay_mqtt/HUONG-DAN.md`. Mới biên dịch và thử phần JSON trên máy tính, chưa chạy trên mạch thật.
+
+Thử trên máy tính (không cần ESP32):
+
+```
+cd node_b
+gcc -Wall -Wextra -Ikep_tay_mqtt test_kep_tay_host.c -o t && ./t
+cd .. && python -m pytest node_b -q
+```
